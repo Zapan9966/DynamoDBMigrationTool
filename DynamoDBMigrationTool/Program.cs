@@ -1,6 +1,7 @@
 ﻿using DynamoDBMigrationTool.Commands.Migration;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace DynamoDBMigrationTool;
 
@@ -9,7 +10,7 @@ namespace DynamoDBMigrationTool;
 [Subcommand(typeof(MigrationCommand))]
 internal class Program
 {
-    public static string Version => "0.0.0";
+    public static string Version => $"v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0"}" ;
 
     public static int Main(string[] args)
     {

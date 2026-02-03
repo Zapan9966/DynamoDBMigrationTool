@@ -4,7 +4,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Package configuation -->
+    <PackAsTool>false</PackAsTool>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageId>DynamoDBMigrationLib</PackageId>
+    <AssemblyVersion>0.0.2</AssemblyVersion>
     <Version>0.0.2</Version>
+    <Authors>Benoit DA SILVA</Authors>
+    <Title>DynamoDB Migration Library</Title>
+    <PackageDescription>Migration library for Amazon DynamoDB</PackageDescription>
+    <Description>Migration library for Amazon DynamoDB</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>todo</PackageProjectUrl>
+    <RepositoryUrl>todo</RepositoryUrl>
+    <PackageTags>dynamodb;migration;library</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
