@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,21 +8,23 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>DynamoDBMigrationLib</PackageId>
     <AssemblyVersion>0.0.2</AssemblyVersion>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Authors>Benoit DA SILVA</Authors>
     <Title>DynamoDB Migration Library</Title>
     <PackageDescription>Migration library for Amazon DynamoDB</PackageDescription>
     <Description>Migration library for Amazon DynamoDB</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>todo</PackageProjectUrl>
-    <RepositoryUrl>todo</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Zapan9966/DynamoDBMigrationTool</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zapan9966/DynamoDBMigrationTool</RepositoryUrl>
     <PackageTags>dynamodb;migration;library</PackageTags>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>
