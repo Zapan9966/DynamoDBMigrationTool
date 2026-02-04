@@ -1,0 +1,17 @@
+build:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: build
+  script: 
+    # Tool assembly version
+    - sed -i "s;<AssemblyVersion>.*</AssemblyVersion>;<AssemblyVersion>$TOOL_VERSION</AssemblyVersion>;g" $TOOL_PROJECT
+    # Lib assembly version
+    - sed -i "s;<AssemblyVersion>.*</AssemblyVersion>;<AssemblyVersion>$LIB_VERSION</AssemblyVersion>;g" $LIB_PROJECT
+    # Build packages
+    - dotnet restore $TOOL_PROJECT
+    - dotnet pack -c Release
+  artifacts:
+    paths:
+      - ./$TOOL_NAME/nupkg/*.nupkg
+      - ./$LIB_NAME/nupkg/*.nupkg
+    expire_in: 1 hour 
+    

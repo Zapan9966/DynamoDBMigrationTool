@@ -15,9 +15,10 @@
     <Title>DynamoDB Migration Tool</Title>
     <PackageDescription>Migration tool for Amazon DynamoDB</PackageDescription>
     <Description>Migration tool for Amazon DynamoDB</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>todo</PackageProjectUrl>
-    <RepositoryUrl>todo</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Zapan9966/DynamoDBMigrationTool</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zapan9966/DynamoDBMigrationTool</RepositoryUrl>
     <PackageTags>dynamodb;migration;tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
@@ -37,5 +38,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DynamoDBMigrationLib\DynamoDBMigrationLib.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,19 @@
+stages:
+  - build
+  - publish
+
+variables:
+  GIT_STRATEGY: clone
+  TOOL_NAME:    DynamoDBMigrationTool
+  TOOL_PROJECT: ./$TOOL_NAME/$TOOL_NAME.csproj
+  LIB_NAME:     DynamoDBMigrationLib
+  LIB_PROJECT:  ./$LIB_NAME/$LIB_NAME.csproj
+
+before_script:
+  - 'export TOOL_VERSION=$(grep -oP "<Version>\K[0-9\.]+" $TOOL_PROJECT)'
+  - 'echo Tool version: $TOOL_VERSION'
+  - 'export LIB_VERSION=$(grep -oP "<Version>\K[0-9\.]+" $LIB_PROJECT)'
+  - 'echo Lib version: $LIB_VERSION'
+
+include:
+  - local: CID/jobs/**.yml
