@@ -10,7 +10,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>DynamoDBMigrationTool</PackageId>
     <AssemblyVersion>0.0.2</AssemblyVersion>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <Authors>Benoit DA SILVA</Authors>
     <Title>DynamoDB Migration Tool</Title>
     <PackageDescription>Migration tool for Amazon DynamoDB</PackageDescription>

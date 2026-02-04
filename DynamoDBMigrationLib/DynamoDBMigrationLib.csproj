@@ -8,7 +8,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>DynamoDBMigrationLib</PackageId>
     <AssemblyVersion>0.0.2</AssemblyVersion>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <Authors>Benoit DA SILVA</Authors>
     <Title>DynamoDB Migration Library</Title>
     <PackageDescription>Migration library for Amazon DynamoDB</PackageDescription>
