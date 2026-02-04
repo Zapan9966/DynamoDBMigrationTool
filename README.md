@@ -60,6 +60,7 @@ await scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateAsync(
 ## Command line usage
 ```bash
 dynamodb [command] [options]
+dynamodb [command] [options]
 ```
 #### Options
 | Option             | Description				| Example            |
@@ -74,6 +75,7 @@ dynamodb [command] [options]
 
 ### Migration command
 ```bash
+dynamodb migration [command] [options]
 dynamodb migration [command] [options]
 ```
 #### Options
@@ -90,6 +92,7 @@ dynamodb migration [command] [options]
 
 ### Add command
 ```bash
+dynamodb migration add [options] <Migration name>
 dynamodb migration add [options] <Migration name>
 ```
 #### Arguments
@@ -108,6 +111,7 @@ dynamodb migration add [options] <Migration name>
 ### Down command
 ```bash
 dynamodb migration down [options] <Migration name>
+dynamodb migration down [options] <Migration name>
 ```
 #### Arguments
 | Argument       | Description                         | Example                             |
@@ -125,6 +129,7 @@ If you enter the name of a migration, all migrations will be reverted until the 
 
 ### Up command
 ```bash
+dynamodb migration up [options]
 dynamodb migration up [options]
 ```
 The `up` command will apply all migrations that have not yet been applied.
