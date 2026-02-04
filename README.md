@@ -6,7 +6,9 @@ This tool is still in development, it has only been tested with a local DynamoDB
 This tool target ASP.NET Web application, it has not been tested with desktop application.
 
 ## Installation
-*TODO*
+```bash
+dotnet tool install --global DynamoDBMigrationTool
+```
 
 ## Usage
 By default, the tool work on the current directory.\
@@ -16,13 +18,13 @@ and use the builded Assembly as if it were part of the tool.
 
 ### Command line structure
 ```bash
-dotnet dynamodb [command] [options]
+dynamodb [command] [options]
 ```
 #### Options
 | Option         | Description				| Example                   |
 | :------------- | :----------------------- | :------------------------ |
-| --version      | Show version information | dotnet dynamodb --version |
-| -?\|-h\|--help | Show help information    | dotnet dynamodb --help    |
+| --version      | Show version information | dynamodb --version |
+| -? \| -h \| --help | Show help information    | dynamodb --help    |
 
 #### Subcommands
 | Command    | Example                                         |
@@ -31,12 +33,12 @@ dotnet dynamodb [command] [options]
 
 ### Migration command
 ```bash
-dotnet dynamodb migration [command] [options]
+dynamodb migration [command] [options]
 ```
 #### Options
 | Option         | Description				| Example                          |
 | :------------- | :----------------------- | :------------------------------- |
-| -?\|-h\|--help | Show help information    | dotnet dynamodb migration --help |
+| -? \| -h \| --help | Show help information    | dynamodb migration --help |
 
 #### Subcommands
 | Command | Example                                                       |
@@ -47,29 +49,29 @@ dotnet dynamodb migration [command] [options]
 
 ### Add command
 ```bash
-dotnet dynamodb migration add [options] <Migration name>
+dynamodb migration add [options] <Migration name>
 ```
 #### Arguments
 | Argumanet      | Description                         | Example                                   |
 | :------------- | :---------------------------------- | :---------------------------------------- | 
-| Migration name | **Required**. Name of the Migration | dotnet dynamodb migration add MyMigration |
+| Migration name | **Required**. Name of the Migration | dynamodb migration add MyMigration |
 
 
 #### Options
 | Option         | Description				| Example                   |
 | :------------- | :----------------------- | :------------------------ |
-| -o\|--output   | The output directory where migrations will be stored. Default value is: Migrations | dotnet dynamodb migration add MyMigration -o Data\Migration |
-| -r\|--root     | Root directory of the application containing migrations | dotnet dynamodb migration add MyMigration -r "/path/to/application" |
-| -?\|-h\|--help | Show help information    | dotnet dynamodb migration add --help    |
+| -o \| --output   | The output directory where migrations will be stored. Default value is: Migrations | dynamodb migration add MyMigration -o Data\Migration |
+| -r \| --root     | Root directory of the application containing migrations | dynamodb migration add MyMigration -r "/path/to/application" |
+| -? \| -h \| --help | Show help information    | dynamodb migration add --help    |
 
 ### Down command
 ```bash
-dotnet dynamodb migration down [options] <Migration name>
+dynamodb migration down [options] <Migration name>
 ```
 #### Arguments
 | Argument       | Description                         | Example                                    |
 | :------------- | :---------------------------------- | :----------------------------------------- | 
-| Migration name | **Optional**. Name of the Migration | dotnet dynamodb migration down MyMigration |
+| Migration name | **Optional**. Name of the Migration | dynamodb migration down MyMigration |
 
 If you don't specify a migration name, only the last migration will be reverted.\
 If you enter the name of a migration, all migrations will be reverted until the entered migration is reverted.
@@ -77,20 +79,20 @@ If you enter the name of a migration, all migrations will be reverted until the 
 #### Options
 | Option         | Description				| Example                               |
 | :------------- | :----------------------- | :------------------------------------ |
-| -r\|--root     | Root directory of the application containing migrations | dotnet dynamodb migration down -r "/path/to/application" |
-| -?\|-h\|--help | Show help information    | dotnet dynamodb migration down --help |
+| -r \| --root     | Root directory of the application containing migrations | dynamodb migration down -r "/path/to/application" |
+| -? \| -h \| --help | Show help information    | dynamodb migration down --help |
 
 ### Up command
 ```bash
-dotnet dynamodb migration up [options]
+dynamodb migration up [options]
 ```
 The `up` command will apply all migrations that have not yet been applied.
 
 #### Options
 | Option         | Description				| Example                               |
 | :------------- | :----------------------- | :------------------------------------ |
-| -r\|--root     | Root directory of the application containing migrations | dotnet dynamodb migration up -r "/path/to/application" |
-| -?\|-h\|--help | Show help information    | dotnet dynamodb migration up --help   |
+| -r \| --root     | Root directory of the application containing migrations | dynamodb migration up -r "/path/to/application" |
+| -? \| -h \| --help | Show help information    | dynamodb migration up --help   |
 
 ## Migration functions
 You can do almost every operations inside migration files using the following low or high level functions.
@@ -346,7 +348,7 @@ DynamoDB local configuration will be searched in the *appsettings.json* file, ex
 ## Apply migration on application startup
 Add a reference to the *DynamoDBMigrationLib* library
 ```bash
-TODO
+dotnet add package DynamoDBMigrationLib
 ```
 
 At the end of *Program.cs*, add the following lines:
