@@ -1,0 +1,14 @@
+publish:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: publish
+  dependencies: 
+    - build
+  needs: 
+    - job: build
+      artifacts: true
+  script: 
+    - dotnet nuget push -k $NUGET_KEY -s https://www.nuget.org ./$TOOL_NAME/nupkg/$TOOL_NAME.$TOOL_VERSION.nupkg --skip-duplicate
+    # - dotnet nuget delete -k $NUGET_KEY -s https://www.nuget.org $TOOL_NAME $TOOL_VERSION --non-interactive
+
+    - dotnet nuget push -k $NUGET_KEY -s https://www.nuget.org ./$LIB_NAME/nupkg/$LIB_NAME.$LIB_VERSION.nupkg --skip-duplicate
+    # - dotnet nuget delete -k $NUGET_KEY -s https://www.nuget.org $LIB_NAME $LIB_VERSION --non-interactive
