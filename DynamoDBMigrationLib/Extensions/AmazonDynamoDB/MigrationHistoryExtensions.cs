@@ -29,9 +29,7 @@ internal static class MigrationHistoryExtensions
             await client.WaitTillTableCreatedAsync(response, cancellationToken);
         }
         catch (ResourceInUseException) 
-        { 
-            // Ignore exception if table already exists
-        }
+        { /* Ignore exception if table already exists */ }
     }
 
     internal static async Task<List<string>> GetAppliedMigrationAsync(

@@ -49,6 +49,6 @@ internal static class TableExtensions
             }
         }
         catch (ResourceNotFoundException)
-        { }
+        { /* Ignore exception if table not found */ }
     }
 }

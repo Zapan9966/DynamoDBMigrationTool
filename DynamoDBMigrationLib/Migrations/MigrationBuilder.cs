@@ -2,13 +2,14 @@
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
+using DynamoDBMigrationLib.Migrations.Interfaces;
 
 namespace DynamoDBMigrationLib.Migrations;
 
 public sealed class MigrationBuilder : List<IMigrationOperation>
 {
     public void CreateTable(CreateTableRequest createTableRequest)
-        => Add(new ClientOperation<CreateTableRequest>(
+        => Add(new MigrationOperation<IAmazonDynamoDB, CreateTableRequest>(
             createTableRequest, async (client, request, ct) =>
             {
                 var response = await client.CreateTableAsync(request, ct);
@@ -17,7 +18,7 @@ public sealed class MigrationBuilder : List<IMigrationOperation>
         ));
 
     public void DeleteTable(DeleteTableRequest deleteTableRequest)
-        => Add(new ClientOperation<DeleteTableRequest>(
+        => Add(new MigrationOperation<IAmazonDynamoDB, DeleteTableRequest>(
             deleteTableRequest, async (client, request, ct) =>
             {
                 var response = await client.DeleteTableAsync(request, ct);
@@ -26,7 +27,7 @@ public sealed class MigrationBuilder : List<IMigrationOperation>
         ));
 
     public void BatchWriteItem(BatchWriteItemRequest batchWriteItemRequest)
-        => Add(new ClientOperation<BatchWriteItemRequest>(
+        => Add(new MigrationOperation<IAmazonDynamoDB, BatchWriteItemRequest>(
             batchWriteItemRequest, async (client, request, ct) =>
             {
                 BatchWriteItemResponse response;
@@ -41,7 +42,7 @@ public sealed class MigrationBuilder : List<IMigrationOperation>
         ));
 
     public void PutItems<T>(IEnumerable<T> items) where T : class
-        => Add(new ContextOperation<T>(
+        => Add(new MigrationOperation<IDynamoDBContext, IEnumerable<T>>(
             items, async (context, items, ct) =>
             {
                 var batchWrite = context.CreateBatchWrite<T>();
@@ -51,7 +52,7 @@ public sealed class MigrationBuilder : List<IMigrationOperation>
         ));
 
     public void DeleteItems<T>(IEnumerable<T> items) where T : class
-        => Add(new ContextOperation<T>(
+        => Add(new MigrationOperation<IDynamoDBContext, IEnumerable<T>>(
             items, async (context, items, ct) =>
             {
                 var batchWrite = context.CreateBatchWrite<T>();
@@ -61,21 +62,14 @@ public sealed class MigrationBuilder : List<IMigrationOperation>
         ));
 
     public void Query<T>(Func<T, CancellationToken, Task> clientAction)
-        => Add(new ClientOperation<Func<T, CancellationToken, Task>>(
-            clientAction, async (client, action, ct) =>
+        => Add(new MigrationOperation<T, Func<T, CancellationToken, Task>>(
+            clientAction, async (dynamoDb, action, ct) =>
             {
                 if (typeof(T) != typeof(IAmazonDynamoDB) && typeof(T) != typeof(IDynamoDBContext))
                 {
-                    throw new NotSupportedException($"Query generic type '{typeof(IAmazonDynamoDB).Name}' is naot a valid type");
+                    throw new NotSupportedException($"Query generic type '{typeof(IAmazonDynamoDB).Name}' is not a valid type");
                 }
-
-                object dynamoDb = typeof(T) == typeof(IAmazonDynamoDB)
-                    ? client
-                    : new DynamoDBContextBuilder()
-                        .WithDynamoDBClient(new Func<IAmazonDynamoDB>(() => client))
-                        .Build();
-
-                await clientAction((T)dynamoDb, ct);
+                await clientAction(dynamoDb, ct);
             }
         ));
 }
