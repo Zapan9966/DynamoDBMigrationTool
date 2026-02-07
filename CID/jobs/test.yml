@@ -1,0 +1,20 @@
+test:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: test
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - > 
+      dotnet test
+      --configuration Release
+      --no-build
+      --results-directory TestResults
+      --logger "junit;LogFileName=TestResults.xml;MethodFormat=Class;FailureBodyFormat=Verbose" 
+  artifacts:
+    when: always
+    paths:
+      - ./**/TestResults.xml
+    reports:
+      junit:
+        - ./**/TestResults.xml

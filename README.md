@@ -1,8 +1,18 @@
 # DynamoDB Migration Tool
 DotNet tool to manage migrations on DynamoDB database.
 
+By default, the tool work on the current directory.\
+Appsettings files are parsed (based on environment) in order to find a configuration for DynamoDB.\
+Migrations are stored as class in the target application (like EF Core do), the tool will **always** build the application 
+and use the builded Assembly as if it were part of the tool.
+
+## Update v0.0.5
+ - Fix migration template
+ - Rework to use DynamoDB services defined in the target application
+ - Test with cloud instance
+ - Add unit test project
+
 ## Disclaimer
-This tool is still in development, it has only been tested with a local DynamoDB.\
 This tool target ASP.NET Web application, it has not been tested with desktop application.
 
 ## Installation
@@ -10,20 +20,51 @@ This tool target ASP.NET Web application, it has not been tested with desktop ap
 dotnet tool install --global DynamoDBMigrationTool
 ```
 
-## Usage
-By default, the tool work on the current directory.\
-Appsettings files are parsed (based on environment) in order to find a configuration for DynamoDB.\
-Migrations are stored as class in the target application (like EF Core do), the tool will **always** build the application 
-and use the builded Assembly as if it were part of the tool.
+## Application bootstrap
 
-### Command line structure
+### Add DynamoDBMigrationLib
+Add a reference to the *DynamoDBMigrationLib* library
+```bash
+dotnet add package DynamoDBMigrationLib
+```
+
+### Bootstrap class
+Create a class that inherits `DynamoDBMigrationBootstrap(IConfiguration)`.\
+Add your DynamoDB configuration inside the `ConfigureServices(IServiceCollection services)` implementation.
+```csharp
+public class MigrationToolBoostrap(IConfiguration configuration) 
+    : DynamoDBMigrationBootstrap(configuration)
+{
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        services
+            .AddSingleton<IAmazonDynamoDB>()
+            .AddSingleton<IDynamoDBContext, DynamoDBContext>();
+    }
+}
+```
+
+### Register DynamoDBMigrationTool service
+In `Program.cs`, add the following line
+```csharp
+builder.Services.AddDynamoDBMigrationTool(new MigrationToolBoostrap(builder.Configuration))
+```
+
+### (Optionnal) Apply migration on startup
+At the end of `Program.cs`, add the following lines:
+```csharp
+using var scope = app.Services.CreateScope();
+await scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateAsync();
+```
+
+## Command line usage
 ```bash
 dynamodb [command] [options]
 ```
 #### Options
-| Option         | Description				| Example                   |
-| :------------- | :----------------------- | :------------------------ |
-| --version      | Show version information | dynamodb --version |
+| Option             | Description				| Example            |
+| :----------------- | :----------------------- | :----------------- |
+| --version          | Show version information | dynamodb --version |
 | -? \| -h \| --help | Show help information    | dynamodb --help    |
 
 #### Subcommands
@@ -36,8 +77,8 @@ dynamodb [command] [options]
 dynamodb migration [command] [options]
 ```
 #### Options
-| Option         | Description				| Example                          |
-| :------------- | :----------------------- | :------------------------------- |
+| Option             | Description				| Example                   |
+| :----------------- | :----------------------- | :------------------------ |
 | -? \| -h \| --help | Show help information    | dynamodb migration --help |
 
 #### Subcommands
@@ -52,34 +93,34 @@ dynamodb migration [command] [options]
 dynamodb migration add [options] <Migration name>
 ```
 #### Arguments
-| Argumanet      | Description                         | Example                                   |
-| :------------- | :---------------------------------- | :---------------------------------------- | 
+| Argumanet      | Description                         | Example                            |
+| :------------- | :---------------------------------- | :--------------------------------- | 
 | Migration name | **Required**. Name of the Migration | dynamodb migration add MyMigration |
 
 
 #### Options
-| Option         | Description				| Example                   |
-| :------------- | :----------------------- | :------------------------ |
-| -o \| --output   | The output directory where migrations will be stored. Default value is: Migrations | dynamodb migration add MyMigration -o Data\Migration |
-| -r \| --root     | Root directory of the application containing migrations | dynamodb migration add MyMigration -r "/path/to/application" |
-| -? \| -h \| --help | Show help information    | dynamodb migration add --help    |
+| Option             | Description				| Example                       |
+| :----------------- | :----------------------- | :---------------------------- |
+| -o \| --output     | The output directory where migrations will be stored. Default value is: Migrations | dynamodb migration add MyMigration -o Data\Migration |
+| -r \| --root       | Root directory of the application containing migrations  | dynamodb migration add MyMigration -r "/path/to/application" |
+| -? \| -h \| --help | Show help information    | dynamodb migration add --help |
 
 ### Down command
 ```bash
 dynamodb migration down [options] <Migration name>
 ```
 #### Arguments
-| Argument       | Description                         | Example                                    |
-| :------------- | :---------------------------------- | :----------------------------------------- | 
+| Argument       | Description                         | Example                             |
+| :------------- | :---------------------------------- | :---------------------------------- | 
 | Migration name | **Optional**. Name of the Migration | dynamodb migration down MyMigration |
 
 If you don't specify a migration name, only the last migration will be reverted.\
 If you enter the name of a migration, all migrations will be reverted until the entered migration is reverted.
 
 #### Options
-| Option         | Description				| Example                               |
-| :------------- | :----------------------- | :------------------------------------ |
-| -r \| --root     | Root directory of the application containing migrations | dynamodb migration down -r "/path/to/application" |
+| Option             | Description				| Example                               |
+| :----------------- | :----------------------- | :------------------------------------ |
+| -r \| --root       | Root directory of the application containing migrations   | dynamodb migration down -r "/path/to/application" |
 | -? \| -h \| --help | Show help information    | dynamodb migration down --help |
 
 ### Up command
@@ -89,9 +130,9 @@ dynamodb migration up [options]
 The `up` command will apply all migrations that have not yet been applied.
 
 #### Options
-| Option         | Description				| Example                               |
-| :------------- | :----------------------- | :------------------------------------ |
-| -r \| --root     | Root directory of the application containing migrations | dynamodb migration up -r "/path/to/application" |
+| Option             | Description				| Example                               |
+| :----------------- | :----------------------- | :------------------------------------ |
+| -r \| --root       | Root directory of the application containing migrations   | dynamodb migration up -r "/path/to/application" |
 | -? \| -h \| --help | Show help information    | dynamodb migration up --help   |
 
 ## Migration functions
@@ -330,30 +371,3 @@ migrationBuilder.Query<IDynamoDBContext>(async (context, cancellationToken) =>
     await batchWrite.ExecuteAsync(cancellationToken);
 });
 ```
-
-
-## DynamoDB local configuration
-DynamoDB local configuration will be searched in the *appsettings.json* file, exemple:
-```json
-{
-  "DynamoDBConfiguration": {
-    "Endpoint": "http://dynamodb_local_endpoint",
-    "AccessKey": "access_key",
-    "SecretKey": "secret_key",
-    "UseHttp": true
-  }
-}
-```
-
-## Apply migration on application startup
-Add a reference to the *DynamoDBMigrationLib* library
-```bash
-dotnet add package DynamoDBMigrationLib
-```
-
-At the end of *Program.cs*, add the following lines:
-```csharp
-using var scope = app.Services.CreateScope();
-await scope.ServiceProvider.GetRequiredService<IAmazonDynamoDB>().Migrate();
-```
-

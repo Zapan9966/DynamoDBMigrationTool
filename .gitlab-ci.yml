@@ -1,9 +1,13 @@
 stages:
   - build
+  - test
   - publish
 
 variables:
-  GIT_STRATEGY: clone
+  GIT_STRATEGY:			clone
+  FF_SCRIPT_SECTIONS:	"true"
+  FF_TIMESTAMPS:		"true"
+
   TOOL_NAME:    DynamoDBMigrationTool
   TOOL_PROJECT: ./$TOOL_NAME/$TOOL_NAME.csproj
   LIB_NAME:     DynamoDBMigrationLib
