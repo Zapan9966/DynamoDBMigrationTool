@@ -1,4 +1,5 @@
 ﻿using DynamoDBMigrationLib.Migrations;
+using DynamoDBMigrationLib.Migrations.Interfaces;
 using System.Reflection;
 
 namespace DynamoDBMigrationLib.Extensions;

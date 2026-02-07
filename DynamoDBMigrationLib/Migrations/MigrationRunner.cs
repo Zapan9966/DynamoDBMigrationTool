@@ -1,19 +1,28 @@
 ﻿using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using DynamoDBMigrationLib.Extensions;
+using DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
 using DynamoDBMigrationLib.Helpers;
-using DynamoDBMigrationLib.Migrations;
+using DynamoDBMigrationLib.Migrations.Interfaces;
 using System.Reflection;
 using System.Text;
 
-namespace DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
+namespace DynamoDBMigrationLib.Migrations;
 
-public static class ClientExtensions
+internal class MigrationRunner(
+    IAmazonDynamoDB client, 
+    IDynamoDBContext context
+) : IMigrationRunner
 {
-    #region Migrate
+    private readonly IAmazonDynamoDB _client = client;
+    private readonly IDynamoDBContext _context = context;
 
-    public static async Task Migrate(this IAmazonDynamoDB client, CancellationToken cancellationToken = default)
-        => await client.Migrate(null, cancellationToken);
+    #region MigrateAsync
 
-    public static async Task Migrate(this IAmazonDynamoDB client, Assembly? assembly, CancellationToken cancellationToken = default)
+    public async Task MigrateAsync(CancellationToken cancellationToken = default)
+        => await MigrateAsync(null, cancellationToken);
+
+    public async Task MigrateAsync(Assembly? assembly, CancellationToken cancellationToken = default)
     {
         Console.OutputEncoding = Encoding.UTF8;
         if (assembly == null)
@@ -21,13 +30,14 @@ public static class ClientExtensions
             ConsoleHelper.WriteTitle();
         }
 
-        await client.CreateMigrationHistoryAsync(cancellationToken);
+        await _client.CreateMigrationHistoryAsync(cancellationToken);
 
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
         var definitions = assembly.GetMigrationsDefinitions();
-        var applied = await client.GetAppliedMigrationAsync(cancellationToken);
+        var applied = await _client.GetAppliedMigrationAsync(cancellationToken);
+        //var applied = new List<string?>();
 
         var migrationsToApply = definitions
             .Where(def => !applied.Any(a => a == def.Key))
@@ -45,11 +55,16 @@ public static class ClientExtensions
 
                 Console.WriteLine($"\U0001F440 Applying migration {migrationId}...");
 
-                foreach (var instruction in builder)
+                foreach (var operation in builder)
                 {
-                    await instruction.Execute(client, cancellationToken);
+                    await operation.Execute(
+                        operation.DynamoDBType == typeof(IDynamoDBContext)
+                            ? _context
+                            : _client,
+                        cancellationToken
+                    );
                 }
-                await client.AddMigrationHistory(migrationId, cancellationToken);
+                await _client.AddMigrationHistory(migrationId, cancellationToken);
 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.Write("\u2705");
@@ -68,13 +83,13 @@ public static class ClientExtensions
 
     #region MigrateDown
 
-    public static async Task MigrateDown(this IAmazonDynamoDB client, CancellationToken cancellationToken = default)
-        => await client.MigrateDown(null, null, cancellationToken);
+    public async Task MigrateDownAsync(CancellationToken cancellationToken = default)
+        => await MigrateDownAsync(null, null, cancellationToken);
 
-    public static async Task MigrateDown(this IAmazonDynamoDB client, string? migrationName, CancellationToken cancellationToken = default)
-        => await client.MigrateDown(migrationName, null, cancellationToken);
+    public async Task MigrateDownAsync(string? migrationName, CancellationToken cancellationToken = default)
+        => await MigrateDownAsync(migrationName, null, cancellationToken);
 
-    public static async Task MigrateDown(this IAmazonDynamoDB client, string? migrationName, Assembly? assembly, CancellationToken cancellationToken = default)
+    public async Task MigrateDownAsync(string? migrationName, Assembly? assembly, CancellationToken cancellationToken = default)
     {
         Console.OutputEncoding = Encoding.UTF8;
         if (assembly == null)
@@ -82,12 +97,12 @@ public static class ClientExtensions
             ConsoleHelper.WriteTitle();
         }
 
-        await client.CreateMigrationHistoryAsync(cancellationToken);
+        await _client.CreateMigrationHistoryAsync(cancellationToken);
 
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
-        var applied = await client.GetAppliedMigrationAsync(cancellationToken);
+        var applied = await _client.GetAppliedMigrationAsync(cancellationToken);
 
         if (applied.Count == 0)
         {
@@ -149,11 +164,16 @@ public static class ClientExtensions
 
             Console.WriteLine($"\U0001F440 Reverting migration {migrationId}...");
 
-            foreach (var instruction in builder)
+            foreach (var operation in builder)
             {
-                await instruction.Execute(client, cancellationToken);
+                await operation.Execute(
+                    operation.DynamoDBType == typeof(IDynamoDBContext)
+                        ? _context
+                        : _client,
+                    cancellationToken
+                );
             }
-            await client.DeleteMigrationHistory(migrationId, cancellationToken);
+            await _client.DeleteMigrationHistory(migrationId, cancellationToken);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("\u2705");
@@ -161,7 +181,6 @@ public static class ClientExtensions
             Console.WriteLine($" Migration {migrationId} reverted successfully.");
             Console.WriteLine();
         }
-
     }
 
     #endregion

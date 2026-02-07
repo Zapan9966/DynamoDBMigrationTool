@@ -1,4 +1,4 @@
-﻿namespace DynamoDBMigrationLib.Migrations;
+﻿namespace DynamoDBMigrationLib.Migrations.Interfaces;
 
 public interface IMigration
 {

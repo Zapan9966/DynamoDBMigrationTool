@@ -1,6 +1,5 @@
 ﻿using DynamoDBMigrationTool.Constants;
 using DynamoDBMigrationTool.Extensions;
-using DynamoDBMigrationLib.Helpers;
 using Fluid;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Build.Construction;
@@ -26,7 +25,6 @@ internal sealed class AddCommand(IConsole console) : BaseCommand
     public override async Task<int> OnExecute()
     {
         Console.OutputEncoding = Encoding.UTF8;
-        ConsoleHelper.WriteTitle();
 
         #region Search csproj in application directory
 
@@ -91,10 +89,11 @@ internal sealed class AddCommand(IConsole console) : BaseCommand
 
             var fluidParser = new FluidParser();
             var template = fluidParser.Parse(Templates.MIGRATION);
+            var applicationName = Path.GetFileNameWithoutExtension(csprojPath);
 
             var context = new TemplateContext(new
             {
-                Namespace = Sanitize($"{GetApplicationName()}.{OutputFolder}", "."),
+                Namespace = Sanitize($"{applicationName}.{OutputFolder}", "."),
                 MigrationId = migrationId,
                 MigrationName = migrationName
             });
@@ -121,6 +120,18 @@ internal sealed class AddCommand(IConsole console) : BaseCommand
         #endregion
 
         return 0;
+    }
+
+    private static string Sanitize(string stringToSanitize, string replace = "_")
+    {
+        var removeChars = new HashSet<char>(" ?&^$#@!()+-,:;<>’\\\'-_*");
+        var result = new StringBuilder(stringToSanitize.Length);
+
+        foreach (char c in stringToSanitize)
+        {
+            result.Append(!removeChars.Contains(c) ? c : replace);
+        }
+        return result.ToString();
     }
 
     private static async Task<bool> MigrationExists(string migrationDirectory, string migrationName)

@@ -8,7 +8,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>DynamoDBMigrationLib</PackageId>
     <AssemblyVersion>0.0.2</AssemblyVersion>
-    <Version>0.0.4</Version>
+    <Version>0.0.5</Version>
     <Authors>Benoit DA SILVA</Authors>
     <Title>DynamoDB Migration Library</Title>
     <PackageDescription>Migration library for Amazon DynamoDB</PackageDescription>
@@ -22,9 +22,13 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DynamoDBMigrationTest" />
   </ItemGroup>
 </Project>
