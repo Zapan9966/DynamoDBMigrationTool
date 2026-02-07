@@ -8,10 +8,12 @@ build:
     - sed -i "s;<AssemblyVersion>.*</AssemblyVersion>;<AssemblyVersion>$LIB_VERSION</AssemblyVersion>;g" $LIB_PROJECT
     # Build packages
     - dotnet restore $TOOL_PROJECT
-    - dotnet pack -c Release
+    - dotnet build -c Release 
+    - dotnet pack -c Release --no-build
   artifacts:
     paths:
-      - ./$TOOL_NAME/nupkg/*.nupkg
-      - ./$LIB_NAME/nupkg/*.nupkg
+      - "**/bin/Release"
+      - "**/obj/Release"
+      - "**/*.nupkg"
     expire_in: 1 hour 
     
