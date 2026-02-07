@@ -58,44 +58,6 @@ await scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateAsync(
 ```
 
 ## Command line usage
-## Application bootstrap
-
-### Add DynamoDBMigrationLib
-Add a reference to the *DynamoDBMigrationLib* library
-```bash
-dotnet add package DynamoDBMigrationLib
-```
-
-### Bootstrap class
-Create a class that inherits `DynamoDBMigrationBootstrap(IConfiguration)`.\
-Add your DynamoDB configuration inside the `ConfigureServices(IServiceCollection services)` implementation.
-```csharp
-public class MigrationToolBoostrap(IConfiguration configuration) 
-    : DynamoDBMigrationBootstrap(configuration)
-{
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        services
-            .AddSingleton<IAmazonDynamoDB>()
-            .AddSingleton<IDynamoDBContext, DynamoDBContext>();
-    }
-}
-```
-
-### Register DynamoDBMigrationTool service
-In `Program.cs`, add the following line
-```csharp
-builder.Services.AddDynamoDBMigrationTool(new MigrationToolBoostrap(builder.Configuration))
-```
-
-### (Optionnal) Apply migration on startup
-At the end of `Program.cs`, add the following lines:
-```csharp
-using var scope = app.Services.CreateScope();
-await scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateAsync();
-```
-
-## Command line usage
 ```bash
 dynamodb [command] [options]
 ```
@@ -106,9 +68,9 @@ dynamodb [command] [options]
 | -? \| -h \| --help | Show help information    | dynamodb --help    |
 
 #### Subcommands
-| Command    | Example                                         |
-| :--------- | :---------------------------------------------- | 
-| migration  | dotnet dynamodb migration [command] \[options\] |
+| Command    | Example                                  |
+| :--------- | :--------------------------------------- | 
+| migration  | dynamodb migration [command] \[options\] |
 
 ### Migration command
 ```bash
@@ -120,11 +82,11 @@ dynamodb migration [command] [options]
 | -? \| -h \| --help | Show help information    | dynamodb migration --help |
 
 #### Subcommands
-| Command | Example                                                       |
-| :------ | :------------------------------------------------------------ | 
-| add     | dotnet dynamodb migration add \[options\] \<Migration name\>  |
-| down    | dotnet dynamodb migration down \[options\] \<Migration name\> |
-| up      | dotnet dynamodb migration up \[options\]                      |
+| Command | Example                                                |
+| :------ | :----------------------------------------------------- | 
+| add     | dynamodb migration add \[options\] \<Migration name\>  |
+| down    | dynamodb migration down \[options\] \<Migration name\> |
+| up      | dynamodb migration up \[options\]                      |
 
 ### Add command
 ```bash
