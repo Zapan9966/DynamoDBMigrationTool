@@ -2,7 +2,8 @@
 
 internal static class Templates
 {
-    internal const string MIGRATION = @"using DynamoDBMigrator.Migrations;
+    internal const string MIGRATION = @"using DynamoDBMigrationLib.Migrations;
+using DynamoDBMigrationLib.Migrations.Interfaces;
 
 namespace {{ Namespace }};
 
