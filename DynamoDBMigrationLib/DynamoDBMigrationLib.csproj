@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -8,7 +8,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>DynamoDBMigrationLib</PackageId>
     <AssemblyVersion>0.0.2</AssemblyVersion>
-    <Version>0.0.5</Version>
+    <Version>0.0.6</Version>
     <Authors>Benoit DA SILVA</Authors>
     <Title>DynamoDB Migration Library</Title>
     <PackageDescription>Migration library for Amazon DynamoDB</PackageDescription>
