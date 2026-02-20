@@ -1,5 +1,6 @@
 ﻿using DynamoDBMigrationLib.Helpers;
 using DynamoDBMigrationTool.Commands.Migration;
+using DynamoDBMigrationTool.Helpers;
 using DynamoDBMigrationTool.Services;
 using DynamoDBMigrationTool.Services.Interface;
 using McMaster.Extensions.CommandLineUtils;
@@ -24,6 +25,7 @@ internal class Program
 
         services
             .AddSingleton<IAssemblyService, AssemblyService>()
+            .AddSingleton<IConfigurationHelperWrapper, ConfigurationHelperWrapper>()
             .AddSingleton(PhysicalConsole.Singleton);
 
         var serviceProvier = services.BuildServiceProvider();

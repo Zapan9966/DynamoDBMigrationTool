@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using DynamoDBMigrationLib;
 using DynamoDBMigrationLib.Constants;
 using DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
 using FluentAssertions;
@@ -54,8 +55,10 @@ public class MigrationHistoryExtensionsTests
                 }
             });
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.CreateMigrationHistoryAsync();
+        var act = () => _mockClient.Object.CreateMigrationHistoryAsync(options);
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -84,8 +87,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new ResourceInUseException("Table already exists"));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.CreateMigrationHistoryAsync();
+        var act = () => _mockClient.Object.CreateMigrationHistoryAsync(options);
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -107,8 +112,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new InternalServerErrorException("Boom"));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.CreateMigrationHistoryAsync();
+        var act = () => _mockClient.Object.CreateMigrationHistoryAsync(options);
 
         // Assert
         await act.Should().ThrowAsync<InternalServerErrorException>();
@@ -126,8 +133,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new OperationCanceledException(cts.Token));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.CreateMigrationHistoryAsync(cts.Token);
+        var act = () => _mockClient.Object.CreateMigrationHistoryAsync(options, cts.Token);
 
         // Assert
         await act.Should().ThrowAsync<OperationCanceledException>();
@@ -165,8 +174,10 @@ public class MigrationHistoryExtensionsTests
                 ]
             });
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var result = await _mockClient.Object.GetAppliedMigrationAsync();
+        var result = await _mockClient.Object.GetAppliedMigrationAsync(options);
 
         // Assert
         result.Should().BeEquivalentTo(
@@ -200,8 +211,10 @@ public class MigrationHistoryExtensionsTests
                 ]
             });
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var result = await _mockClient.Object.GetAppliedMigrationAsync();
+        var result = await _mockClient.Object.GetAppliedMigrationAsync(options);
 
         // Assert
         result.Should().ContainSingle()
@@ -222,8 +235,10 @@ public class MigrationHistoryExtensionsTests
                 Items = []
             });
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var result = await _mockClient.Object.GetAppliedMigrationAsync();
+        var result = await _mockClient.Object.GetAppliedMigrationAsync(options);
 
         // Assert
         result.Should().BeEmpty();
@@ -240,8 +255,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new InternalServerErrorException("Boom"));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.GetAppliedMigrationAsync();
+        var act = () => _mockClient.Object.GetAppliedMigrationAsync(options);
 
         // Assert
         await act.Should().ThrowAsync<InternalServerErrorException>();
@@ -268,8 +285,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ReturnsAsync(new PutItemResponse());
 
+        var options = new MigrationToolOptions();
+
         // Act
-        await _mockClient.Object.AddMigrationHistory(migrationId);
+        await _mockClient.Object.AddMigrationHistory(migrationId, options);
 
         // Assert
         _mockClient.Verify(c =>
@@ -291,8 +310,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new ConditionalCheckFailedException("Boom"));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.AddMigrationHistory(migrationId);
+        var act = () => _mockClient.Object.AddMigrationHistory(migrationId, options);
 
         // Assert
         await act.Should().ThrowAsync<ConditionalCheckFailedException>();
@@ -310,8 +331,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ReturnsAsync(new PutItemResponse());
 
+        var options = new MigrationToolOptions();
+
         // Act
-        await _mockClient.Object.AddMigrationHistory("001_Init", cts.Token);
+        await _mockClient.Object.AddMigrationHistory("001_Init", options, cts.Token);
 
         // Assert
         _mockClient.Verify(c =>
@@ -341,8 +364,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ReturnsAsync(new DeleteItemResponse());
 
+        var options = new MigrationToolOptions();
+
         // Act
-        await _mockClient.Object.DeleteMigrationHistory(migrationId);
+        await _mockClient.Object.DeleteMigrationHistory(migrationId, options);
 
         // Assert
         _mockClient.Verify(c =>
@@ -364,8 +389,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ThrowsAsync(new ConditionalCheckFailedException("Boom"));
 
+        var options = new MigrationToolOptions();
+
         // Act
-        var act = () => _mockClient.Object.DeleteMigrationHistory(migrationId);
+        var act = () => _mockClient.Object.DeleteMigrationHistory(migrationId, options);
 
         // Assert
         await act.Should().ThrowAsync<ConditionalCheckFailedException>();
@@ -383,8 +410,10 @@ public class MigrationHistoryExtensionsTests
             ))
             .ReturnsAsync(new DeleteItemResponse());
 
+        var options = new MigrationToolOptions();
+
         // Act
-        await _mockClient.Object.DeleteMigrationHistory("001_Init", cts.Token);
+        await _mockClient.Object.DeleteMigrationHistory("001_Init", options, cts.Token);
 
         // Assert
         _mockClient.Verify(c =>

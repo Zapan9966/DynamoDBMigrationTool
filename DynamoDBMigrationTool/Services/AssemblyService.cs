@@ -30,12 +30,10 @@ internal class AssemblyService : IAssemblyService
         return assemblyPath ?? string.Empty;
     }
 
-    public IMigrationRunner CreateRunner(Assembly? assembly, string? assemblyPath)
+    public IInternalMigrationRunner CreateRunner(Assembly? assembly, IConfiguration configuration, string? assemblyPath)
     {
         ArgumentNullException.ThrowIfNull(assembly);
         ArgumentException.ThrowIfNullOrEmpty(assemblyPath);
-
-        var configuration = LoadConfiguration(assemblyPath);
 
         var bootstrapType = assembly
             .GetTypes()
@@ -52,7 +50,7 @@ internal class AssemblyService : IAssemblyService
         services.AddDynamoDBMigrationTool(bootstrap);
 
         var provider = services.BuildServiceProvider();
-        return provider.GetRequiredService<IMigrationRunner>();
+        return (IInternalMigrationRunner)provider.GetRequiredService<IMigrationRunner>();
     }
 
     public Assembly LoadAssembly(string? assemblyPath)
@@ -114,34 +112,6 @@ internal class AssemblyService : IAssemblyService
                     : error);
         }
         return output;
-    }
-
-    private static IConfiguration LoadConfiguration(string? assemblyPath)
-    {
-        if (string.IsNullOrEmpty(assemblyPath) || !File.Exists(assemblyPath))
-            throw new FileNotFoundException("Unable de find builded assembly path.");
-
-        var assemblyDirectory = Path.GetDirectoryName(assemblyPath)!;
-
-        if (string.IsNullOrEmpty(assemblyDirectory) || !Directory.Exists(assemblyDirectory))
-            throw new DirectoryNotFoundException("Assembly directory not found.");
-
-        var appsettingsFiles = Directory.GetFiles(assemblyDirectory, "appsettings.*json")
-            .Select(f => Path.GetFileName(f))
-            .OrderBy(f => f);
-
-        if (appsettingsFiles.Any())
-        {
-            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-
-            return new ConfigurationBuilder()
-                .SetBasePath(assemblyDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
-                .AddEnvironmentVariables()
-                .Build();
-        }
-        throw new FileNotFoundException("Assembly appsettings.json not found.");
     }
 
     #endregion

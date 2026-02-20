@@ -4,6 +4,7 @@ using DynamoDBMigrationLib.Extensions;
 using DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
 using DynamoDBMigrationLib.Helpers;
 using DynamoDBMigrationLib.Migrations.Interfaces;
+using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using System.Text;
 
@@ -12,7 +13,7 @@ namespace DynamoDBMigrationLib.Migrations;
 internal class MigrationRunner(
     IAmazonDynamoDB client, 
     IDynamoDBContext context
-) : IMigrationRunner
+) : IInternalMigrationRunner
 {
     private readonly IAmazonDynamoDB _client = client;
     private readonly IDynamoDBContext _context = context;
@@ -20,9 +21,13 @@ internal class MigrationRunner(
     #region MigrateAsync
 
     public async Task MigrateAsync(CancellationToken cancellationToken = default)
-        => await MigrateAsync(null, cancellationToken);
+        => await MigrateAsync(null, null, cancellationToken);
 
-    public async Task MigrateAsync(Assembly? assembly, CancellationToken cancellationToken = default)
+    public async Task MigrateAsync(
+        Assembly? assembly,
+        MigrationToolOptions? options,
+        CancellationToken cancellationToken = default
+    )
     {
         Console.OutputEncoding = Encoding.UTF8;
         if (assembly == null)
@@ -30,14 +35,23 @@ internal class MigrationRunner(
             ConsoleHelper.WriteTitle();
         }
 
-        await _client.CreateMigrationHistoryAsync(cancellationToken);
-
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
+        if (options == null)
+        {
+            options = new MigrationToolOptions();
+            var configuration = ConfigurationHelper.LoadConfiguration(assembly.Location);
+            configuration.GetSection("DynamoDBMigrationTool").Bind(options);            
+        }
+
+        if (options.CreateHistoryTable)
+        {
+            await _client.CreateMigrationHistoryAsync(options, cancellationToken);
+        }
+
         var definitions = assembly.GetMigrationsDefinitions();
-        var applied = await _client.GetAppliedMigrationAsync(cancellationToken);
-        //var applied = new List<string?>();
+        var applied = await _client.GetAppliedMigrationAsync(options, cancellationToken);
 
         var migrationsToApply = definitions
             .Where(def => !applied.Any(a => a == def.Key))
@@ -64,7 +78,7 @@ internal class MigrationRunner(
                         cancellationToken
                     );
                 }
-                await _client.AddMigrationHistory(migrationId, cancellationToken);
+                await _client.AddMigrationHistory(migrationId, options, cancellationToken);
 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.Write("\u2705");
@@ -84,12 +98,17 @@ internal class MigrationRunner(
     #region MigrateDown
 
     public async Task MigrateDownAsync(CancellationToken cancellationToken = default)
-        => await MigrateDownAsync(null, null, cancellationToken);
+        => await MigrateDownAsync(null, cancellationToken);
 
     public async Task MigrateDownAsync(string? migrationName, CancellationToken cancellationToken = default)
-        => await MigrateDownAsync(migrationName, null, cancellationToken);
+        => await MigrateDownAsync(migrationName, null, null, cancellationToken);
 
-    public async Task MigrateDownAsync(string? migrationName, Assembly? assembly, CancellationToken cancellationToken = default)
+    public async Task MigrateDownAsync(
+        string? migrationName, 
+        Assembly? assembly,
+        MigrationToolOptions? options, 
+        CancellationToken cancellationToken = default
+    )
     {
         Console.OutputEncoding = Encoding.UTF8;
         if (assembly == null)
@@ -97,12 +116,22 @@ internal class MigrationRunner(
             ConsoleHelper.WriteTitle();
         }
 
-        await _client.CreateMigrationHistoryAsync(cancellationToken);
-
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
-        var applied = await _client.GetAppliedMigrationAsync(cancellationToken);
+        if (options == null)
+        {
+            options = new MigrationToolOptions();
+            var configuration = ConfigurationHelper.LoadConfiguration(assembly.Location);
+            configuration.GetSection("DynamoDBMigrationTool").Bind(options);
+        }
+
+        if (options.CreateHistoryTable)
+        {
+            await _client.CreateMigrationHistoryAsync(options, cancellationToken);
+        }
+
+        var applied = await _client.GetAppliedMigrationAsync(options, cancellationToken);
 
         if (applied.Count == 0)
         {
@@ -173,7 +202,7 @@ internal class MigrationRunner(
                     cancellationToken
                 );
             }
-            await _client.DeleteMigrationHistory(migrationId, cancellationToken);
+            await _client.DeleteMigrationHistory(migrationId, options, cancellationToken);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("\u2705");

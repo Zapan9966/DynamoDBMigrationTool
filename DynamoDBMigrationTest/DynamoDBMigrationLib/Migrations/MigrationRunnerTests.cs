@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
+using DynamoDBMigrationLib;
 using DynamoDBMigrationLib.Constants;
 using DynamoDBMigrationLib.Migrations;
 using DynamoDBMigrationTest.Helpers;
@@ -59,9 +60,10 @@ public class MigrationRunnerTests
             .ReturnsAsync(new PutItemResponse());
 
         var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
+        var options = new MigrationToolOptions();
 
         // Act
-        await runner.MigrateAsync(typeof(TestMigration).Assembly);
+        await runner.MigrateAsync(typeof(TestMigration).Assembly, options);
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(1);
@@ -105,9 +107,10 @@ public class MigrationRunnerTests
             });
 
         var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
+        var options = new MigrationToolOptions();
 
         // Act
-        await runner.MigrateAsync(typeof(TestMigration).Assembly);
+        await runner.MigrateAsync(typeof(TestMigration).Assembly, options);
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(0);
@@ -145,9 +148,10 @@ public class MigrationRunnerTests
             .ReturnsAsync(new DeleteItemResponse());
 
         var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
+        var options = new MigrationToolOptions();
 
         // Act
-        await runner.MigrateDownAsync(null, typeof(TestMigration).Assembly);
+        await runner.MigrateDownAsync(null, typeof(TestMigration).Assembly, options);
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(0);
@@ -177,10 +181,11 @@ public class MigrationRunnerTests
             });
 
         var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
+        var options = new MigrationToolOptions();
 
         // Act
         Func<Task> act = () =>
-            runner.MigrateDownAsync("DoesNotExist", typeof(TestMigration).Assembly);
+            runner.MigrateDownAsync("DoesNotExist", typeof(TestMigration).Assembly, options);
 
         // Assert
         await act.Should().ThrowAsync<KeyNotFoundException>();

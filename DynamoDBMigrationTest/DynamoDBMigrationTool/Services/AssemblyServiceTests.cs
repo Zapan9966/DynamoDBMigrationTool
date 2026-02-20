@@ -1,12 +1,9 @@
-﻿using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DynamoDBMigrationTool.Services;
-using DynamoDBMigrationLib.Migrations.Interfaces;
+﻿using DynamoDBMigrationLib.Migrations.Interfaces;
 using DynamoDBMigrationTest.Helpers;
+using DynamoDBMigrationTool.Services;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace DynamoDBMigrationTest.DynamoDBMigrationTool.Services;
 
@@ -34,7 +31,7 @@ public class AssemblyServiceTests
     public void CreateRunner_Should_Throw_When_Assembly_Is_Null()
     {
         // Act
-        Action act = () => _service.CreateRunner(null, "path.dll");
+        Action act = () => _service.CreateRunner(null, It.IsAny<IConfiguration>(), "path.dll");
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -44,7 +41,7 @@ public class AssemblyServiceTests
     public void CreateRunner_Should_Throw_When_AssemblyPath_Is_Null()
     {
         // Act
-        Action act = () => _service.CreateRunner(typeof(TestBootstrap).Assembly, null);
+        Action act = () => _service.CreateRunner(typeof(TestBootstrap).Assembly, It.IsAny<IConfiguration>(), null);
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -67,7 +64,7 @@ public class AssemblyServiceTests
         File.WriteAllBytes(assemblyPath, [0]); // fichier existant
 
         // Act
-        var runner = service.CreateRunner(assembly, assemblyPath);
+        var runner = service.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath);
 
         // Assert
         runner.Should().NotBeNull();

@@ -7,23 +7,23 @@ internal static class MigrationHistoryExtensions
 {
     internal static async Task CreateMigrationHistoryAsync(
         this IAmazonDynamoDB client,
+        MigrationToolOptions options,
         CancellationToken cancellationToken = default
     )
     {
         try
         {
-            var tableName = Constants.Constants.MIGRATION_HISTORY_TABLE;
             var response = await client.CreateTableAsync(new CreateTableRequest
             {
-                TableName = tableName,
+                TableName = options.HistoryTable,
                 AttributeDefinitions = [
                     new("type", "S"),
-                new("name", "S"),
-            ],
+                    new("name", "S"),
+                ],
                 KeySchema = [
                     new("type", "HASH"),
-                new("name", "RANGE"),
-            ],
+                    new("name", "RANGE"),
+                ],
                 ProvisionedThroughput = new(5, 5)
             }, cancellationToken);
             await client.WaitTillTableCreatedAsync(response, cancellationToken);
@@ -34,12 +34,13 @@ internal static class MigrationHistoryExtensions
 
     internal static async Task<List<string>> GetAppliedMigrationAsync(
         this IAmazonDynamoDB client,
+        MigrationToolOptions options,
         CancellationToken cancellationToken = default
     )
     {
         var request = new QueryRequest
         {
-            TableName = Constants.Constants.MIGRATION_HISTORY_TABLE,
+            TableName = options.HistoryTable,
             KeyConditions = new Dictionary<string, Condition>
             {
                 {
@@ -64,12 +65,13 @@ internal static class MigrationHistoryExtensions
     internal static async Task AddMigrationHistory(
         this IAmazonDynamoDB client,
         string migrationId,
+        MigrationToolOptions options,
         CancellationToken cancellationToken = default
     )
     {
         var request = new PutItemRequest
         {
-            TableName = Constants.Constants.MIGRATION_HISTORY_TABLE,
+            TableName = options.HistoryTable,
             Item = new()
             {
                 { "type", new("migration") },
@@ -82,12 +84,13 @@ internal static class MigrationHistoryExtensions
     internal static async Task DeleteMigrationHistory(
         this IAmazonDynamoDB client,
         string migrationId,
+        MigrationToolOptions options,
         CancellationToken cancellationToken = default
     )
     {
         var request = new DeleteItemRequest
         {
-            TableName = Constants.Constants.MIGRATION_HISTORY_TABLE,
+            TableName = options.HistoryTable,
             Key = new()
             {
                 { "type", new("migration") },

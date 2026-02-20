@@ -1,9 +1,12 @@
-﻿using DynamoDBMigrationLib.Migrations.Interfaces;
+﻿using DynamoDBMigrationLib;
+using DynamoDBMigrationLib.Migrations.Interfaces;
 using DynamoDBMigrationTest.Helpers;
 using DynamoDBMigrationTool.Commands.Migration;
+using DynamoDBMigrationTool.Helpers;
 using DynamoDBMigrationTool.Services.Interface;
 using FluentAssertions;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace DynamoDBMigrationTest.DynamoDBMigrationTool.Commands.Migration;
@@ -11,12 +14,14 @@ namespace DynamoDBMigrationTest.DynamoDBMigrationTool.Commands.Migration;
 public class UpCommandTests
 {
     private readonly Mock<IAssemblyService> _mockAssemblyService;
-    private readonly Mock<IMigrationRunner> _mockRunner;
+    private readonly Mock<IInternalMigrationRunner> _mockRunner;
+    private readonly Mock<IConfigurationHelperWrapper> _mockIConfigurationHelperWrapper;
 
     public UpCommandTests()
     {
         _mockAssemblyService = new Mock<IAssemblyService>(MockBehavior.Strict);
-        _mockRunner = new Mock<IMigrationRunner>();
+        _mockRunner = new Mock<IInternalMigrationRunner>();
+        _mockIConfigurationHelperWrapper = new Mock<IConfigurationHelperWrapper>();
     }
 
     private static (Mock<IConsole> Console, StringWriter Out, StringWriter Error) CreateConsole()
@@ -38,7 +43,11 @@ public class UpCommandTests
         var dir = FilesyStemHelper.CreateTempDir();
         var (console, _, _) = CreateConsole();
 
-        var command = new UpCommand(_mockAssemblyService.Object, console.Object)
+        var command = new UpCommand(
+            _mockAssemblyService.Object, 
+            _mockIConfigurationHelperWrapper.Object, 
+            console.Object
+        )
         {
             ApplicationDirectory = dir
         };
@@ -63,7 +72,11 @@ public class UpCommandTests
             .Setup(s => s.AssemblyPath(It.IsAny<string?>()))
             .Throws(new InvalidOperationException("Build failed"));
 
-        var command = new UpCommand(_mockAssemblyService.Object, console.Object)
+        var command = new UpCommand(
+            _mockAssemblyService.Object, 
+            _mockIConfigurationHelperWrapper.Object, 
+            console.Object
+        )
         {
             ApplicationDirectory = dir
         };
@@ -87,10 +100,6 @@ public class UpCommandTests
         var assembly = typeof(UpCommandTests).Assembly;
         var assemblyPath = Path.Combine(dir, "TestApp.dll");
 
-        _mockRunner
-            .Setup(r => r.MigrateAsync(assembly, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         _mockAssemblyService
             .Setup(s => s.AssemblyPath(It.IsAny<string?>()))
             .Returns(assemblyPath);
@@ -100,10 +109,22 @@ public class UpCommandTests
             .Returns(assembly);
 
         _mockAssemblyService.
-            Setup(s => s.CreateRunner(assembly, assemblyPath))
+            Setup(s => s.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath))
             .Returns(_mockRunner.Object);
 
-        var command = new UpCommand(_mockAssemblyService.Object, console.Object)
+        _mockIConfigurationHelperWrapper
+               .Setup(s => s.LoadConfiguration(assemblyPath))
+               .Returns(new ConfigurationBuilder().Build());
+
+        _mockRunner
+            .Setup(r => r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var command = new UpCommand(
+            _mockAssemblyService.Object, 
+            _mockIConfigurationHelperWrapper.Object, 
+            console.Object
+        )
         {
             ApplicationDirectory = dir
         };
@@ -114,7 +135,7 @@ public class UpCommandTests
         // Assert
         result.Should().Be(0);
         _mockRunner.Verify(r =>
-            r.MigrateAsync(assembly, It.IsAny<CancellationToken>()),
+            r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -131,7 +152,7 @@ public class UpCommandTests
         var assemblyPath = Path.Combine(dir, "TestApp.dll");
 
         _mockRunner
-            .Setup(r => r.MigrateAsync(assembly, It.IsAny<CancellationToken>()))
+            .Setup(r => r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Migration failed"));
 
         _mockAssemblyService
@@ -143,10 +164,14 @@ public class UpCommandTests
             .Returns(assembly);
 
         _mockAssemblyService
-            .Setup(s => s.CreateRunner(assembly, assemblyPath))
+            .Setup(s => s.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath))
             .Returns(_mockRunner.Object);
 
-        var command = new UpCommand(_mockAssemblyService.Object, console.Object)
+        var command = new UpCommand(
+            _mockAssemblyService.Object, 
+            _mockIConfigurationHelperWrapper.Object, 
+            console.Object
+        )
         {
             ApplicationDirectory = dir
         };
