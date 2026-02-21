@@ -1,5 +1,4 @@
 ﻿using DynamoDBMigrationLib.Migrations.Interfaces;
-using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
 namespace DynamoDBMigrationTool.Services.Interface;
@@ -7,6 +6,6 @@ namespace DynamoDBMigrationTool.Services.Interface;
 internal interface IAssemblyService
 {
     string AssemblyPath(string? csprojPath);
-    IInternalMigrationRunner CreateRunner(Assembly? assembly, IConfiguration configuration, string? assemblyPath);
+    IInternalMigrationRunner CreateRunner(Assembly? assembly, string assemblyPath);
     Assembly LoadAssembly(string? assemblyPath);
 }

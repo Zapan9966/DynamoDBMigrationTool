@@ -1,8 +1,8 @@
 ﻿using DynamoDBMigrationLib.Abstraction;
 using DynamoDBMigrationLib.Extensions;
 using DynamoDBMigrationLib.Migrations.Interfaces;
+using DynamoDBMigrationLib.Services;
 using DynamoDBMigrationTool.Services.Interface;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Reflection;
@@ -11,8 +11,12 @@ using System.Text.RegularExpressions;
 
 namespace DynamoDBMigrationTool.Services;
 
-internal class AssemblyService : IAssemblyService
+internal class AssemblyService(
+    IMigrationToolConfigService configService
+) : IAssemblyService
 {
+    private readonly IMigrationToolConfigService _configService = configService;
+
     public string AssemblyPath(string? csprojPath)
     {
         if (string.IsNullOrEmpty(csprojPath) || !File.Exists(csprojPath))
@@ -30,10 +34,9 @@ internal class AssemblyService : IAssemblyService
         return assemblyPath ?? string.Empty;
     }
 
-    public IInternalMigrationRunner CreateRunner(Assembly? assembly, IConfiguration configuration, string? assemblyPath)
+    public IInternalMigrationRunner CreateRunner(Assembly? assembly, string assemblyPath)
     {
         ArgumentNullException.ThrowIfNull(assembly);
-        ArgumentException.ThrowIfNullOrEmpty(assemblyPath);
 
         var bootstrapType = assembly
             .GetTypes()
@@ -44,6 +47,7 @@ internal class AssemblyService : IAssemblyService
             )
             ?? throw new FileNotFoundException("DynamoDBMigrationBootstrap not found in the target assembly.");
 
+        var configuration = _configService.LoadConfiguration(assemblyPath);
         var bootstrap = (DynamoDBMigrationBootstrap)Activator.CreateInstance(bootstrapType, configuration)!;
 
         var services = new ServiceCollection();

@@ -1,4 +1,5 @@
 ﻿using DynamoDBMigrationLib.Migrations.Interfaces;
+using DynamoDBMigrationLib.Services;
 using DynamoDBMigrationTest.Helpers;
 using DynamoDBMigrationTool.Services;
 using FluentAssertions;
@@ -9,11 +10,13 @@ namespace DynamoDBMigrationTest.DynamoDBMigrationTool.Services;
 
 public class AssemblyServiceTests
 {
+    private readonly Mock<IMigrationToolConfigService> _mockConfigService;
     private readonly AssemblyService _service;
 
     public AssemblyServiceTests()
     {
-        _service = new AssemblyService();
+        _mockConfigService = new Mock<IMigrationToolConfigService>();
+        _service = new AssemblyService(_mockConfigService.Object);
     }
 
     [Fact]
@@ -30,28 +33,23 @@ public class AssemblyServiceTests
     [Fact]
     public void CreateRunner_Should_Throw_When_Assembly_Is_Null()
     {
+        // Arrange
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(typeof(TestMigration).Assembly.Location))
+            .Returns(new ConfigurationBuilder().Build());
+
         // Act
-        Action act = () => _service.CreateRunner(null, It.IsAny<IConfiguration>(), "path.dll");
+        Action act = () => _service.CreateRunner(null, "path.dll");
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void CreateRunner_Should_Throw_When_AssemblyPath_Is_Null()
-    {
-        // Act
-        Action act = () => _service.CreateRunner(typeof(TestBootstrap).Assembly, It.IsAny<IConfiguration>(), null);
-
-        // Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
     public void CreateRunner_Should_Return_MigrationRunner_When_Dependencies_Are_Resolvable()
     {
         // Arrange
-        var service = new AssemblyService();
+        var service = new AssemblyService(_mockConfigService.Object);
         var assembly = typeof(TestBootstrap).Assembly;
         var dir = Directory.CreateDirectory(
             Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
@@ -63,8 +61,13 @@ public class AssemblyServiceTests
         var assemblyPath = Path.Combine(dir.FullName, "dummy.dll");
         File.WriteAllBytes(assemblyPath, [0]); // fichier existant
 
+        // Arrange
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(typeof(TestMigration).Assembly.Location))
+            .Returns(new ConfigurationBuilder().Build());
+
         // Act
-        var runner = service.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath);
+        var runner = service.CreateRunner(assembly, assemblyPath);
 
         // Assert
         runner.Should().NotBeNull();

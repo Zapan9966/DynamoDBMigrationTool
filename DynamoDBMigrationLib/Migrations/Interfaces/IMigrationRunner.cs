@@ -6,14 +6,14 @@ internal interface IInternalMigrationRunner : IMigrationRunner
 {
     Task MigrateAsync(
         Assembly? assembly,
-        MigrationToolOptions? options,
+        string? assemblyPath,
         CancellationToken cancellationToken = default
     );
 
     Task MigrateDownAsync(
         string? migrationName,
         Assembly? assembly,
-        MigrationToolOptions? options,
+        string? assemblyPath,
         CancellationToken cancellationToken = default
     );
 }

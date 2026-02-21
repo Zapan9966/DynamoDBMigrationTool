@@ -6,11 +6,8 @@ Appsettings files are parsed (based on environment) in order to find a configura
 Migrations are stored as class in the target application (like EF Core do), the tool will **always** build the application 
 and use the builded Assembly as if it were part of the tool.
 
-## Update v0.0.5
- - Fix migration template
- - Rework to use DynamoDB services defined in the target application
- - Test with cloud instance
- - Add unit test project
+## Update v0.0.6
+ - Configurable options in appsettings.json added
 
 ## Disclaimer
 This tool target ASP.NET Web application, it has not been tested with desktop application.
@@ -55,6 +52,21 @@ At the end of `Program.cs`, add the following lines:
 ```csharp
 using var scope = app.Services.CreateScope();
 await scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateAsync();
+```
+
+## Appsettings options
+The following options can be added to the appsettings.json file:\ 
+ - `CreateHistoryTable (boolean)`: Optional. If false, the tool will not create the history table. Default: `true`.
+ - `HistoryTable (string)`: Optional. Name of the migration history table. Default: `__migration-history`.
+
+Exemple:
+```json
+{
+  "DynamoDBMigrationTool": {
+    "CreateHistoryTable": false,
+    "HistoryTable": "migrations-history"
+  }
+}
 ```
 
 ## Command line usage

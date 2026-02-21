@@ -4,6 +4,7 @@ using DynamoDBMigrationLib.Extensions;
 using DynamoDBMigrationLib.Extensions.AmazonDynamoDB;
 using DynamoDBMigrationLib.Helpers;
 using DynamoDBMigrationLib.Migrations.Interfaces;
+using DynamoDBMigrationLib.Services;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using System.Text;
@@ -12,11 +13,13 @@ namespace DynamoDBMigrationLib.Migrations;
 
 internal class MigrationRunner(
     IAmazonDynamoDB client, 
-    IDynamoDBContext context
+    IDynamoDBContext context,
+    IMigrationToolConfigService configService
 ) : IInternalMigrationRunner
 {
     private readonly IAmazonDynamoDB _client = client;
     private readonly IDynamoDBContext _context = context;
+    private readonly IMigrationToolConfigService _configService = configService;
 
     #region MigrateAsync
 
@@ -25,7 +28,7 @@ internal class MigrationRunner(
 
     public async Task MigrateAsync(
         Assembly? assembly,
-        MigrationToolOptions? options,
+        string? assemblyPath,
         CancellationToken cancellationToken = default
     )
     {
@@ -38,12 +41,10 @@ internal class MigrationRunner(
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
-        if (options == null)
-        {
-            options = new MigrationToolOptions();
-            var configuration = ConfigurationHelper.LoadConfiguration(assembly.Location);
-            configuration.GetSection("DynamoDBMigrationTool").Bind(options);            
-        }
+        var options = new MigrationToolOptions();
+        _configService
+            .LoadConfiguration(assemblyPath ?? assembly.Location)
+            .Bind("DynamoDBMigrationTool", options);
 
         if (options.CreateHistoryTable)
         {
@@ -106,7 +107,7 @@ internal class MigrationRunner(
     public async Task MigrateDownAsync(
         string? migrationName, 
         Assembly? assembly,
-        MigrationToolOptions? options, 
+        string? assemblyPath,
         CancellationToken cancellationToken = default
     )
     {
@@ -119,12 +120,10 @@ internal class MigrationRunner(
         assembly ??= Assembly.GetEntryAssembly()
             ?? throw new EntryPointNotFoundException("Assembly not found");
 
-        if (options == null)
-        {
-            options = new MigrationToolOptions();
-            var configuration = ConfigurationHelper.LoadConfiguration(assembly.Location);
-            configuration.GetSection("DynamoDBMigrationTool").Bind(options);
-        }
+        var options = new MigrationToolOptions();
+        _configService
+            .LoadConfiguration(assemblyPath ?? assembly.Location)
+            .Bind("DynamoDBMigrationTool", options);
 
         if (options.CreateHistoryTable)
         {

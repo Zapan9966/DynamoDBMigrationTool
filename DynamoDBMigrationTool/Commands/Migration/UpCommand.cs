@@ -1,21 +1,16 @@
-﻿using DynamoDBMigrationLib;
-using DynamoDBMigrationTool.Extensions;
-using DynamoDBMigrationTool.Helpers;
+﻿using DynamoDBMigrationTool.Extensions;
 using DynamoDBMigrationTool.Services.Interface;
 using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
 using System.Text;
 
 namespace DynamoDBMigrationTool.Commands.Migration;
 
 internal sealed class UpCommand(
     IAssemblyService assemblyService,
-    IConfigurationHelperWrapper configurationHelperWrapper,
     IConsole console
 ) : BaseCommand
 {
     private readonly IAssemblyService _assemblyService = assemblyService;
-    private readonly IConfigurationHelperWrapper _configurationHelperWrapper = configurationHelperWrapper;
     private readonly IConsole _console = console;
 
     public override async Task<int> OnExecute()
@@ -26,13 +21,10 @@ internal sealed class UpCommand(
         {
             var assemblyPath = _assemblyService.AssemblyPath(GetProjectFile());
 
-            var configuration = _configurationHelperWrapper.LoadConfiguration(assemblyPath);
-            var options = configuration.Get<MigrationToolOptions>();
-
             var assembly = _assemblyService.LoadAssembly(assemblyPath);
-            var runner = _assemblyService.CreateRunner(assembly, configuration, assemblyPath);
+            var runner = _assemblyService.CreateRunner(assembly, assemblyPath);
 
-            await runner.MigrateAsync(assembly, options);
+            await runner.MigrateAsync(assembly, assemblyPath);
         }
         catch (Exception ex)
         {

@@ -1,12 +1,9 @@
-﻿using DynamoDBMigrationLib;
-using DynamoDBMigrationLib.Migrations.Interfaces;
+﻿using DynamoDBMigrationLib.Migrations.Interfaces;
 using DynamoDBMigrationTest.Helpers;
 using DynamoDBMigrationTool.Commands.Migration;
-using DynamoDBMigrationTool.Helpers;
 using DynamoDBMigrationTool.Services.Interface;
 using FluentAssertions;
 using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace DynamoDBMigrationTest.DynamoDBMigrationTool.Commands.Migration;
@@ -15,13 +12,11 @@ public class UpCommandTests
 {
     private readonly Mock<IAssemblyService> _mockAssemblyService;
     private readonly Mock<IInternalMigrationRunner> _mockRunner;
-    private readonly Mock<IConfigurationHelperWrapper> _mockIConfigurationHelperWrapper;
 
     public UpCommandTests()
     {
         _mockAssemblyService = new Mock<IAssemblyService>(MockBehavior.Strict);
         _mockRunner = new Mock<IInternalMigrationRunner>();
-        _mockIConfigurationHelperWrapper = new Mock<IConfigurationHelperWrapper>();
     }
 
     private static (Mock<IConsole> Console, StringWriter Out, StringWriter Error) CreateConsole()
@@ -45,7 +40,6 @@ public class UpCommandTests
 
         var command = new UpCommand(
             _mockAssemblyService.Object, 
-            _mockIConfigurationHelperWrapper.Object, 
             console.Object
         )
         {
@@ -74,7 +68,6 @@ public class UpCommandTests
 
         var command = new UpCommand(
             _mockAssemblyService.Object, 
-            _mockIConfigurationHelperWrapper.Object, 
             console.Object
         )
         {
@@ -109,20 +102,15 @@ public class UpCommandTests
             .Returns(assembly);
 
         _mockAssemblyService.
-            Setup(s => s.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath))
+            Setup(s => s.CreateRunner(assembly, assemblyPath))
             .Returns(_mockRunner.Object);
 
-        _mockIConfigurationHelperWrapper
-               .Setup(s => s.LoadConfiguration(assemblyPath))
-               .Returns(new ConfigurationBuilder().Build());
-
         _mockRunner
-            .Setup(r => r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.MigrateAsync(assembly, assemblyPath, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var command = new UpCommand(
             _mockAssemblyService.Object, 
-            _mockIConfigurationHelperWrapper.Object, 
             console.Object
         )
         {
@@ -135,7 +123,7 @@ public class UpCommandTests
         // Assert
         result.Should().Be(0);
         _mockRunner.Verify(r =>
-            r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()),
+            r.MigrateAsync(assembly, assemblyPath, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -152,7 +140,7 @@ public class UpCommandTests
         var assemblyPath = Path.Combine(dir, "TestApp.dll");
 
         _mockRunner
-            .Setup(r => r.MigrateAsync(assembly, It.IsAny<MigrationToolOptions>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.MigrateAsync(assembly, assemblyPath, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Migration failed"));
 
         _mockAssemblyService
@@ -164,12 +152,11 @@ public class UpCommandTests
             .Returns(assembly);
 
         _mockAssemblyService
-            .Setup(s => s.CreateRunner(assembly, It.IsAny<IConfiguration>(), assemblyPath))
+            .Setup(s => s.CreateRunner(assembly, assemblyPath))
             .Returns(_mockRunner.Object);
 
         var command = new UpCommand(
             _mockAssemblyService.Object, 
-            _mockIConfigurationHelperWrapper.Object, 
             console.Object
         )
         {

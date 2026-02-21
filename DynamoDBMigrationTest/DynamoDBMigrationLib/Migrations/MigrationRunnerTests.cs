@@ -1,11 +1,12 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
-using DynamoDBMigrationLib;
 using DynamoDBMigrationLib.Constants;
 using DynamoDBMigrationLib.Migrations;
+using DynamoDBMigrationLib.Services;
 using DynamoDBMigrationTest.Helpers;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace DynamoDBMigrationTest.DynamoDBMigrationLib.Migrations;
@@ -14,11 +15,13 @@ public class MigrationRunnerTests
 {
     private readonly Mock<IAmazonDynamoDB> _mockClient;
     private readonly Mock<IDynamoDBContext> _mockContext;
+    private readonly Mock<IMigrationToolConfigService> _mockConfigService;
 
     public MigrationRunnerTests()
     {
         _mockClient = new Mock<IAmazonDynamoDB>();
         _mockContext = new Mock<IDynamoDBContext>();
+        _mockConfigService = new Mock<IMigrationToolConfigService>();
 
         _mockClient.Setup(c => c.CreateTableAsync(
                 It.IsAny<CreateTableRequest>(),
@@ -51,6 +54,10 @@ public class MigrationRunnerTests
         // Arrange
         TestMigration.ExecutionCount = 0;
 
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(It.IsAny<string>()))
+            .Returns(new ConfigurationBuilder().Build());
+
         _mockClient
             .Setup(c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryResponse { Items = [] });
@@ -59,11 +66,13 @@ public class MigrationRunnerTests
             .Setup(c => c.PutItemAsync(It.IsAny<PutItemRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutItemResponse());
 
-        var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
-        var options = new MigrationToolOptions();
+        var runner = new MigrationRunner(
+            _mockClient.Object, 
+            _mockContext.Object, 
+            _mockConfigService.Object);
 
         // Act
-        await runner.MigrateAsync(typeof(TestMigration).Assembly, options);
+        await runner.MigrateAsync(typeof(TestMigration).Assembly, "path.dll");
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(1);
@@ -106,11 +115,17 @@ public class MigrationRunnerTests
                 ]
             });
 
-        var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
-        var options = new MigrationToolOptions();
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(It.IsAny<string>()))
+            .Returns(new ConfigurationBuilder().Build());
+
+        var runner = new MigrationRunner(
+            _mockClient.Object,
+            _mockContext.Object,
+            _mockConfigService.Object);
 
         // Act
-        await runner.MigrateAsync(typeof(TestMigration).Assembly, options);
+        await runner.MigrateAsync(typeof(TestMigration).Assembly, "path.dll");
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(0);
@@ -147,11 +162,17 @@ public class MigrationRunnerTests
             .Setup(c => c.DeleteItemAsync(It.IsAny<DeleteItemRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteItemResponse());
 
-        var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
-        var options = new MigrationToolOptions();
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(It.IsAny<string>()))
+            .Returns(new ConfigurationBuilder().Build());
+
+        var runner = new MigrationRunner(
+            _mockClient.Object,
+            _mockContext.Object,
+            _mockConfigService.Object);
 
         // Act
-        await runner.MigrateDownAsync(null, typeof(TestMigration).Assembly, options);
+        await runner.MigrateDownAsync(null, typeof(TestMigration).Assembly, "path.dll");
 
         // Assert
         TestMigration.ExecutionCount.Should().Be(0);
@@ -180,12 +201,18 @@ public class MigrationRunnerTests
                 ]
             });
 
-        var runner = new MigrationRunner(_mockClient.Object, _mockContext.Object);
-        var options = new MigrationToolOptions();
+        _mockConfigService
+            .Setup(c => c.LoadConfiguration(It.IsAny<string>()))
+            .Returns(new ConfigurationBuilder().Build());
+
+        var runner = new MigrationRunner(
+            _mockClient.Object,
+            _mockContext.Object,
+            _mockConfigService.Object);
 
         // Act
         Func<Task> act = () =>
-            runner.MigrateDownAsync("DoesNotExist", typeof(TestMigration).Assembly, options);
+            runner.MigrateDownAsync("DoesNotExist", typeof(TestMigration).Assembly, "path.dll");
 
         // Assert
         await act.Should().ThrowAsync<KeyNotFoundException>();
